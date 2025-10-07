@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificador de Pagamentos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilo para a transição suave do modal */
+        #paymentModalOverlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white w-full max-w-3xl p-6 sm:p-8 rounded-2xl shadow-lg">
+        
+        <!-- Cabeçalho -->
+        <div class="text-center mb-8">
+            <!-- Imagem adicionada -->
+            <img src="https://i.imgur.com/VcDc5H6.png" alt="Ícone de Verificação" class="mx-auto h-20 w-20 mb-4 rounded-xl shadow">
+            
+            <h1 class="text-3xl font-bold text-gray-800">Verificador de Pagamentos</h1>
+            <p class="text-gray-500 mt-2">Insira o nome para consultar a situação das mensalidades.</p>
+        </div>
+
+        <!-- Barra de Busca -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-6">
+            <input type="text" id="searchInput" placeholder="Digite o nome completo..." class="flex-grow w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+            <button onclick="buscarNome()" class="bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-700 transition shadow">Buscar</button>
+        </div>
+
+        <!-- Área de Resultados -->
+        <div id="result" class="bg-gray-50 p-6 rounded-lg min-h-[200px] flex items-center justify-center">
+            <p class="text-gray-500">Aguardando busca...</p>
+        </div>
+    </div>
+
+    <!-- Modal de Pagamento PIX (inicialmente oculto) -->
+    <div id="paymentModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50" onclick="fecharModalPagamento()">
+        <div id="paymentModal" class="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full relative" onclick="event.stopPropagation()">
+            <!-- Botão de fechar -->
+            <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Pagamento via PIX</h2>
+            <p class="text-center text-gray-500 mb-6">Efetue o pagamento para regularizar a situação.</p>
+
+            <!-- Detalhes do Pagamento -->
+            <div class="space-y-4">
+                <p class="text-sm"><strong>Nome:</strong> <span id="modalNome" class="font-normal text-gray-700"></span></p>
+                <p class="text-sm"><strong>Referente a:</strong> <span id="modalMes" class="font-normal text-gray-700"></span></p>
+                
+                <div class="bg-blue-50 border border-blue-200 text-center p-4 rounded-lg">
+                    <p class="text-sm text-blue-800">Valor</p>
+                    <p id="modalValor" class="text-3xl font-bold text-blue-900">R$ 15,00</p>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">Chave PIX</p>
+                    <div class="flex items-center border rounded-lg bg-gray-50">
+                        <input id="pixKeyInput" type="text" value="" readonly class="w-full bg-transparent p-3 text-gray-800 focus:outline-none">
+                        <button id="copyPixButton" onclick="copiarChavePix()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-3 rounded-r-lg transition">Copiar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- CHAVES PIX PARA CADA MÊS ---
+        const chavesPixMensais = [
+            "", // Jan
+            "", // Fev
+            "", // Mar
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", // Abr
+            "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", // Mai
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", // Jun
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", // Jul
+            "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", // Ago
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", // Set
+            "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", // Out
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", // Nov
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"  // Dez
+        ];
+
+        // --- BASE DE DADOS ---
+        const membros = [
+            {"nome": "ALFREDO ALVES DE HOLANDA JÚNIOR", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "ANDERSON", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "ANDRÉ", "pagamentos": [false, false, false, false, false, false, false, false, false, false, false, false]},
+            {"nome": "EDUARDO RIBEIRO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "MATHEUS LAMARTINS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "CARLOS HENRIQUE", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "CAROL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "CLÉSIO", "pagamentos": [true, true, true, false, true, false, false, false, false, false, false, false]},
+            {"nome": "DANUSY", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "DARNLEY", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "LUIS DAVID", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "LUIS EDUARDO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "ELIÁBIO", "pagamentos": [true, true, true, false, true, true, false, false, false, false, false, false]},
+            {"nome": "EMANUEL FAUSTINO", "pagamentos": [true, true, true, false, true, true, false, false, false, false, false, false]},
+            {"nome": "STEFANIA", "pagamentos": [true, true, true, false, true, true, true, true, true, true, false, false]},
+            {"nome": "FERNANDO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "FLÁVIO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "GABRIEL", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "MARIA GABRIELA", "pagamentos": [true, true, true, false, true, true, true, true, true, true, false, false]},
+            {"nome": "HELDER FILHO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "HIAGO FAUSTINO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "HILDINAR", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "ILANA", "pagamentos": [true, true, true, false, true, true, true, true, true, true, true, true]},
+            {"nome": "JARBAS", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "JOÃO MARCELO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "JOÃO MARCOS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "JOÃO PEDRO CRUZ", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "JOÃO PEDRO SOARES", "pagamentos": [true, true, true, false, true, false, false, false, false, false, false, false]},
+            {"nome": "JOÃO VITOR ANDRADE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "JOÃO VITOR OLIVEIRA", "pagamentos": [true, true, true, false, true, true, false, false, false, false, false, false]},
+            {"nome": "JOÃO VITOR ALVES", "pagamentos": [true, true, true, false, true, true, false, false, false, false, false, false]},
+            {"nome": "JOSIANE", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "JOYCE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "LETICIA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "MACYEL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "MARCIEL FERSAN", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "MARIANE AQUINO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "MARIA PAULA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "MARINA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "MIKELLY", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "NAELLY MORAIS", "pagamentos": [true, true, true, false, true, false, false, false, false, false, false, false]},
+            {"nome": "PRISCILA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "RAFAEL", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "RAUL", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "REGINA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "ROSSELLY D’AVILA", "pagamentos": [true, true, true, false, true, false, false, false, false, false, false, false]},
+            {"nome": "SARA DANTAS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "SILVIO", "pagamentos": [true, true, true, true, true, true, true, true, true, false, false, false]},
+            {"nome": "TAIANE", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "THAIS", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "VALÉRIA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "WESLEY SEREJO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "FRANCISCO WEVERTON", "pagamentos": [true, true, true, true, true, false, false, true, false, false, false, false]},
+            {"nome": "WILLDECLAY", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "YLANNA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "YÔRHAN", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "THAIZY", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]}
+        ];
+        // --- FIM DA BASE DE DADOS ---
+
+        const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+        document.getElementById("searchInput").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                buscarNome();
+            }
+        });
+
+        function buscarNome() {
+            const input = document.getElementById('searchInput');
+            const termoBusca = input.value.trim().toUpperCase();
+            const resultDiv = document.getElementById('result');
+
+            if (!termoBusca) {
+                resultDiv.innerHTML = `<p class="text-yellow-700">Por favor, digite um nome para buscar.</p>`;
+                return;
+            }
+
+            const resultados = membros.filter(m => m.nome.toUpperCase() === termoBusca);
+
+            if (resultados.length > 0) {
+                let html = '';
+                resultados.forEach(membro => {
+                    const pagamentos = membro.pagamentos;
+                    const totalPago = pagamentos.filter(p => p).length;
+                    const totalPendente = 12 - totalPago;
+
+                    html += `
+                        <div class="mb-6 last:mb-0">
+                            <h3 class="text-xl font-bold text-gray-800">${membro.nome}</h3>
+                            <p class="text-sm text-gray-600 mb-4">Total de mensalidades pagas: <span class="font-bold text-green-600">${totalPago} de 12</span></p>
+                            <div class="grid grid-cols-6 sm:grid-cols-12 gap-2 text-center">`;
+
+                    pagamentos.forEach((pago, index) => {
+                        const mes = meses[index];
+                        if (pago) {
+                            html += `
+                                <div class="p-2 bg-green-100 text-green-800 rounded-lg">
+                                    <span class="font-bold text-sm">${mes}</span>
+                                    <span class="block text-xs">Pago</span>
+                                </div>`;
+                        } else {
+                            html += `
+                                <div class="p-2 bg-red-100 text-red-800 rounded-lg cursor-pointer hover:bg-red-200 hover:shadow-md transition" onclick="abrirModalPagamento('${membro.nome}', '${mes}', ${index})">
+                                    <span class="font-bold text-sm">${mes}</span>
+                                    <span class="block text-xs">Pendente</span>
+                                </div>`;
+                        }
+                    });
+
+                    html += `</div>`; // Fim da grid de meses
+
+                    // Adiciona o botão de débito total se houver pendências
+                    if (totalPendente > 0) {
+                        const valorTotalDebito = totalPendente * 15;
+                        html += `
+                            <div class="mt-6 border-t pt-4 text-center">
+                                <p class="text-sm text-gray-700 mb-2">Débito total: <span class="font-bold">R$ ${valorTotalDebito.toFixed(2).replace('.', ',')}</span></p>
+                                <button onclick="abrirModalPagamentoTotal('${membro.nome}', ${valorTotalDebito})" class="bg-red-600 text-white font-bold px-5 py-2 rounded-lg hover:bg-red-700 transition shadow-md">
+                                    Pagar Débito Total
+                                </button>
+                            </div>`;
+                    }
+
+                    html += `</div>`; // Fim do card do membro
+                });
+                resultDiv.innerHTML = html;
+            } else {
+                resultDiv.innerHTML = `<p class="text-red-600 font-semibold">Nenhum membro encontrado com o nome "${input.value}".</p>`;
+            }
+        }
+
+        function abrirModalPagamento(nome, mes, mesIndex) {
+            document.getElementById('modalNome').innerText = nome;
+            document.getElementById('modalMes').innerText = mes;
+            document.getElementById('modalValor').innerText = 'R$ 15,00';
+            document.getElementById('pixKeyInput').value = chavesPixMensais[mesIndex];
+            document.getElementById('paymentModalOverlay').classList.remove('hidden');
+        }
+
+        function abrirModalPagamentoTotal(nome, valor) {
+            document.getElementById('modalNome').innerText = nome;
+            document.getElementById('modalMes').innerText = "Débito Total";
+            document.getElementById('modalValor').innerText = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+            document.getElementById('pixKeyInput').value = "gcdesign.informatica@gmail.com";
+            document.getElementById('paymentModalOverlay').classList.remove('hidden');
+        }
+
+        function fecharModalPagamento() {
+            document.getElementById('paymentModalOverlay').classList.add('hidden');
+            // Reseta o texto do botão de copiar ao fechar
+            document.getElementById('copyPixButton').innerText = 'Copiar';
+        }
+
+        function copiarChavePix() {
+            const inputChave = document.getElementById('pixKeyInput');
+            const button = document.getElementById('copyPixButton');
+            
+            inputChave.select();
+            inputChave.setSelectionRange(0, 99999);
+
+            try {
+                document.execCommand('copy');
+                button.innerText = 'Copiado!';
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                }, 2000);
+            } catch (err) {
+                alert('Não foi possível copiar a chave. Tente manualmente.');
+            }
+
+            window.getSelection().removeAllRanges();
+        }
+
+    </script>
+
+</body>
+</html>
+
