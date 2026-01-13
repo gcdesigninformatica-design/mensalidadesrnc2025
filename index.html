@@ -13,9 +13,16 @@
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         #paymentModalOverlay, #adminPasswordOverlay { transition: opacity 0.3s ease-in-out; }
+        .loading-spinner { border-top-color: #2563eb; animation: spinner 0.6s linear infinite; }
+        @keyframes spinner { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen p-4 pb-20">
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center">
+        <div class="w-12 h-12 border-4 border-slate-200 rounded-full loading-spinner mb-4"></div>
+        <p class="text-slate-500 font-medium">Sincronizando dados...</p>
+    </div>
 
     <div class="max-w-4xl mx-auto space-y-6">
         <!-- Cabeçalho Principal -->
@@ -25,22 +32,6 @@
             <h1 class="text-3xl font-extrabold tracking-tight text-slate-800">Verificador de Pagamentos</h1>
             <p class="text-slate-500 mt-2">Gestão transparente de mensalidades e pendências.</p>
         </header>
-
-        <!-- Dashboard de Resumo -->
-        <div id="statsDashboard" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Membros</p>
-                <p id="statTotalMembros" class="text-2xl font-bold text-slate-800">0</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-xs font-semibold text-green-600 uppercase tracking-wider">Total Pago (Mês Atual)</p>
-                <p id="statTotalPago" class="text-2xl font-bold text-green-600">0</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-xs font-semibold text-red-600 uppercase tracking-wider">Pendentes</p>
-                <p id="statTotalPendente" class="text-2xl font-bold text-red-600">0</p>
-            </div>
-        </div>
 
         <!-- Barra de Busca Inteligente -->
         <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
@@ -57,39 +48,29 @@
         <!-- Área de Resultados -->
         <main id="result" class="space-y-4">
             <div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-                <p class="text-slate-400">Comece a digitar para ver os resultados...</p>
+                <p class="text-slate-400">A carregar banco de dados...</p>
             </div>
         </main>
     </div>
 
     <!-- Modal de Pagamento -->
     <div id="paymentModalOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50" onclick="fecharModalPagamento()">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full relative scale-in" onclick="event.stopPropagation()">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full relative" onclick="event.stopPropagation()">
             <button onclick="fecharModalPagamento()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            
-            <h2 class="text-2xl font-bold text-slate-800 mb-1">Pagamento PIX</h2>
-            <p class="text-slate-500 text-sm mb-6">Escaneie ou copie o código abaixo.</p>
-
-            <div class="space-y-5">
+            <h2 class="text-2xl font-bold text-slate-800 mb-1 text-center">Pagamento PIX</h2>
+            <div class="space-y-5 mt-6">
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Destinatário & Mês</p>
                     <p id="modalNome" class="text-slate-800 font-semibold"></p>
                     <p id="modalMes" class="text-blue-600 text-sm font-medium"></p>
                 </div>
-                
-                <div class="bg-blue-600 p-6 rounded-2xl text-center text-white shadow-lg shadow-blue-200">
-                    <p class="text-blue-100 text-sm opacity-80">Valor a pagar</p>
+                <div class="bg-blue-600 p-6 rounded-2xl text-center text-white shadow-lg">
                     <p id="modalValor" class="text-4xl font-black">R$ 9,75</p>
                 </div>
-
-                <div>
-                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">Copia e Cola</label>
-                    <div class="flex mt-1 items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
-                        <input id="pixKeyInput" type="text" readonly class="bg-transparent p-4 w-full text-xs font-mono text-slate-600 focus:outline-none">
-                        <button id="copyPixButton" onclick="copiarChavePix()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 h-full transition py-4">Copiar</button>
-                    </div>
+                <div class="flex mt-1 items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+                    <input id="pixKeyInput" type="text" readonly class="bg-transparent p-4 w-full text-xs font-mono text-slate-600 outline-none">
+                    <button id="copyPixButton" onclick="copiarChavePix()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 h-full transition py-4">Copiar</button>
                 </div>
             </div>
         </div>
@@ -99,16 +80,11 @@
     <div id="adminPasswordOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[60]" onclick="cancelarAdmin()">
         <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-xs w-full relative" onclick="event.stopPropagation()">
             <h2 class="text-xl font-bold text-slate-800 mb-4 text-center">Acesso Restrito</h2>
-            <p class="text-sm text-slate-500 mb-4 text-center">Introduza a senha para ativar o Modo Administrador.</p>
-            
-            <input type="password" id="adminPasswordInput" placeholder="Senha" 
-                class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 mb-4 text-center outline-none">
-            
+            <input type="password" id="adminPasswordInput" placeholder="Senha" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 mb-4 text-center outline-none">
             <div id="adminPasswordError" class="text-red-500 text-xs text-center mb-4 hidden">Senha incorreta!</div>
-
             <div class="flex gap-2">
-                <button onclick="cancelarAdmin()" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">Cancelar</button>
-                <button onclick="confirmarAdmin()" class="flex-1 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition">Entrar</button>
+                <button onclick="cancelarAdmin()" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold">Cancelar</button>
+                <button onclick="confirmarAdmin()" class="flex-1 py-2 bg-blue-600 text-white rounded-xl font-bold">Entrar</button>
             </div>
         </div>
     </div>
@@ -124,111 +100,129 @@
         </div>
     </footer>
 
-    <script>
-        // Configurações Globais
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuração Firebase
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Variáveis de Estado
+        let membros = [];
+        let user = null;
         const VALOR_MENSALIDADE = 9.75;
-        const SENHA_ADMIN = "1234"; // Altera aqui a tua senha
+        const SENHA_ADMIN = "1234";
         const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const chavesPixMensais = ["", "", "", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"];
 
-        const chavesPixMensais = [
-            "", "", "",
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F",
-            "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9",
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056",
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488",
-            "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23",
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48",
-            "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A",
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E",
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"
-        ];
+        // Autenticação
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
 
-        // Base de Dados
-        let membros = [
-            {"nome": "ALFREDO ALVES", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
-            {"nome": "ANDERSON", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-            {"nome": "ANDRÉ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-            {"nome": "EDUARDO RIBEIRO", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "MATHEUS LAMARTINS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "CARLOS HENRIQUE", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "CAROL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-            {"nome": "CLÉSIO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-            {"nome": "DANUSY", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "DARNLEY", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-            {"nome": "LUIS DAVID", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-            {"nome": "LUIS EDUARDO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-            {"nome": "ELIABIO", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "EMANUEL FAUSTINO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-            {"nome": "STEFANIA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "FERNANDO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "FLÁVIO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-            {"nome": "GABRIEL", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-            {"nome": "MARIA GABRIELA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-            {"nome": "HELDER FILHO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "HIAGO FAUSTINO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "HILDINAR", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "ILANA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "JARBAS", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "JOÃO MARCELO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-            {"nome": "JOÃO MARCOS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "JOÃO PEDRO CRUZ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-            {"nome": "JOÃO PEDRO SOARES", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "JOÃO VICTOR ANDRADE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "JOÃO VITOR OLIVEIRA", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-            {"nome": "JOÃO VITOR ALVES", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-            {"nome": "JOSIANE", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-            {"nome": "JOYCE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "LETICIA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "MACYEL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-            {"nome": "MARCIEL FERSAN", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "MARIANE AQUINO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-            {"nome": "MARIA PAULA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-            {"nome": "MARINA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "MIKELLY", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-            {"nome": "NAELLY MORAIS", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "PRISCILA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
-            {"nome": "RAFAEL", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "RAUL", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-            {"nome": "REGINA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
-            {"nome": "ROSSELLY", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-            {"nome": "SARAH DANTAS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "SILVIO", "pagamentos": [true, true, true, true, true, true, true, true, true, false, false, false]},
-            {"nome": "TAIANE", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-            {"nome": "THAIS", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
-            {"nome": "VALÉRIA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "WESLEY SEREJO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-            {"nome": "FRANCISCO WEVERTON", "pagamentos": [true, true, true, true, true, false, false, true, false, false, false, false]},
-            {"nome": "WILLDECLAY", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-            {"nome": "YLANNA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-            {"nome": "YÔRHAN", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-            {"nome": "THAIZY", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]}
-        ];
+        onAuthStateChanged(auth, (u) => {
+            user = u;
+            if (u) initSync();
+        });
 
-        window.onload = () => {
-            atualizarStats();
-            buscarNome();
-
-            // Adicionar evento para a tecla Enter no modal de senha
-            document.getElementById('adminPasswordInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') confirmarAdmin();
+        // Sincronização em Tempo Real
+        const initSync = () => {
+            const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'membros');
+            
+            onSnapshot(collectionRef, async (snapshot) => {
+                if (snapshot.empty) {
+                    await seedDatabase();
+                    return;
+                }
+                membros = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                buscarNome();
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, (error) => {
+                console.error("Erro Firestore:", error);
             });
         };
 
-        function atualizarStats() {
-            const totalMembros = membros.length;
-            const mesAtualIdx = new Date().getMonth();
-            const totalPago = membros.filter(m => m.pagamentos[mesAtualIdx]).length;
-            const totalPendente = totalMembros - totalPago;
+        // Popular banco inicial se estiver vazio
+        const seedDatabase = async () => {
+            const initialData = [
+                {"nome": "ALFREDO ALVES", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+                {"nome": "ANDERSON", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+                {"nome": "ANDRÉ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+                {"nome": "EDUARDO RIBEIRO", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "MATHEUS LAMARTINS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "CARLOS HENRIQUE", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "CAROL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+                {"nome": "CLÉSIO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+                {"nome": "DANUSY", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "DARNLEY", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+                {"nome": "LUIS DAVID", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+                {"nome": "LUIS EDUARDO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+                {"nome": "ELIABIO", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "EMANUEL FAUSTINO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+                {"nome": "STEFANIA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "FERNANDO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "FLÁVIO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+                {"nome": "GABRIEL", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+                {"nome": "MARIA GABRIELA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+                {"nome": "HELDER FILHO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "HIAGO FAUSTINO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "HILDINAR", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "ILANA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "JARBAS", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "JOÃO MARCELO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+                {"nome": "JOÃO MARCOS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "JOÃO PEDRO CRUZ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+                {"nome": "JOÃO PEDRO SOARES", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "JOÃO VICTOR ANDRADE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "JOÃO VITOR OLIVEIRA", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+                {"nome": "JOÃO VITOR ALVES", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+                {"nome": "JOSIANE", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+                {"nome": "JOYCE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "LETICIA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "MACYEL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+                {"nome": "MARCIEL FERSAN", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "MARIANE AQUINO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+                {"nome": "MARIA PAULA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+                {"nome": "MARINA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "MIKELLY", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+                {"nome": "NAELLY MORAIS", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "PRISCILA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+                {"nome": "RAFAEL", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "RAUL", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+                {"nome": "REGINA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+                {"nome": "ROSSELLY", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+                {"nome": "SARAH DANTAS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "SILVIO", "pagamentos": [true, true, true, true, true, true, true, true, true, false, false, false]},
+                {"nome": "TAIANE", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+                {"nome": "THAIS", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+                {"nome": "VALÉRIA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "WESLEY SEREJO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+                {"nome": "FRANCISCO WEVERTON", "pagamentos": [true, true, true, true, true, false, false, true, false, false, false, false]},
+                {"nome": "WILLDECLAY", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+                {"nome": "YLANNA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+                {"nome": "YÔRHAN", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+                {"nome": "THAIZY", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]}
+            ];
 
-            document.getElementById('statTotalMembros').innerText = totalMembros;
-            document.getElementById('statTotalPago').innerText = totalPago;
-            document.getElementById('statTotalPendente').innerText = totalPendente;
-        }
+            for (const m of initialData) {
+                const docId = m.nome.toLowerCase().replace(/\s+/g, '_');
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'membros', docId), m);
+            }
+        };
 
-        function buscarNome() {
+        // Lógica de UI
+        window.buscarNome = () => {
             const termo = document.getElementById('searchInput').value.trim().toUpperCase();
             const resultDiv = document.getElementById('result');
-            const isAdmin = document.getElementById('adminToggle').checked;
             
             const filtrados = membros.filter(m => m.nome.includes(termo));
 
@@ -247,131 +241,95 @@
                     html += `
                         <article class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 fade-in">
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
-                                <div>
-                                    <h3 class="text-xl font-bold text-slate-800">${membro.nome}</h3>
-                                    <p class="text-sm text-slate-500 font-medium">Frequência anual: <span class="${totalPago > 9 ? 'text-green-600' : 'text-orange-600'}">${totalPago} de 12 meses</span></p>
-                                </div>
-                                ${valorDebito > 0 ? `<span class="bg-red-50 text-red-700 px-4 py-1 rounded-full text-xs font-bold border border-red-100 uppercase tracking-wider">Pendente: R$ ${valorDebito.toFixed(2).replace('.',',')}</span>` : `<span class="bg-green-50 text-green-700 px-4 py-1 rounded-full text-xs font-bold border border-green-100 uppercase tracking-wider">Em dia</span>`}
+                                <div><h3 class="text-xl font-bold text-slate-800">${membro.nome}</h3></div>
+                                ${valorDebito > 0 ? `<span class="bg-red-50 text-red-700 px-4 py-1 rounded-full text-xs font-bold border border-red-100 uppercase">Pendente: R$ ${valorDebito.toFixed(2).replace('.',',')}</span>` : `<span class="bg-green-50 text-green-700 px-4 py-1 rounded-full text-xs font-bold border border-green-100 uppercase">Em dia</span>`}
                             </div>
-
                             <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2">
                                 ${membro.pagamentos.map((pago, i) => `
-                                    <div class="group relative">
-                                        <button 
-                                            onclick="${isAdmin ? `toggleStatus('${membro.nome}', ${i})` : (!pago ? `abrirModalPagamento('${membro.nome}', '${meses[i]}', ${i})` : '')}"
-                                            class="w-full py-3 rounded-xl transition-all duration-200 flex flex-col items-center justify-center border-2 
-                                            ${pago ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:text-blue-600'}
-                                            ${isAdmin ? 'cursor-pointer hover:scale-105 active:scale-95' : (pago ? 'cursor-default' : 'cursor-pointer')}">
-                                            <span class="text-[10px] font-bold uppercase">${meses[i]}</span>
-                                            ${pago ? '<svg class="w-4 h-4 mt-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : '<span class="text-[10px] mt-1 font-medium">---</span>'}
-                                        </button>
-                                        <div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
-                                            ${pago ? 'Pago' : (isAdmin ? 'Clique para marcar como pago' : 'Pendente - Clique p/ pagar')}
-                                        </div>
-                                    </div>
+                                    <button 
+                                        onclick="window.acaoClique('${membro.id}', ${i}, ${pago})"
+                                        class="w-full py-3 rounded-xl transition-all border-2 flex flex-col items-center justify-center
+                                        ${pago ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:text-blue-600'}">
+                                        <span class="text-[10px] font-bold uppercase">${meses[i]}</span>
+                                    </button>
                                 `).join('')}
                             </div>
-                            
-                            ${totalPendente > 0 ? `
-                                <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end">
-                                    <button onclick="abrirModalPagamentoTotal('${membro.nome}', ${valorDebito})" class="text-sm font-bold text-red-600 hover:text-red-700 underline decoration-2 underline-offset-4">Pagar débito total (R$ ${valorDebito.toFixed(2).replace('.', ',')})</button>
-                                </div>
-                            ` : ''}
-                        </article>
-                    `;
+                        </article>`;
                 });
                 resultDiv.innerHTML = html;
             } else {
-                resultDiv.innerHTML = `<div class="text-center py-20 bg-white rounded-3xl border border-slate-200"><p class="text-slate-400">Nenhum membro encontrado com esse nome.</p></div>`;
+                resultDiv.innerHTML = `<div class="text-center py-20 bg-white rounded-3xl border border-slate-200"><p class="text-slate-400">Nenhum membro encontrado.</p></div>`;
             }
-        }
+        };
 
-        // Funções do Modo Admin com Senha
-        let pendenciaAdmin = false;
+        window.acaoClique = (docId, mesIdx, estaPago) => {
+            const isAdmin = document.getElementById('adminToggle').checked;
+            const membro = membros.find(m => m.id === docId);
+            if (isAdmin) {
+                toggleStatus(docId, mesIdx);
+            } else if (!estaPago) {
+                abrirModalPagamento(membro.nome, meses[mesIdx], mesIdx);
+            }
+        };
 
-        function tratarCliqueAdmin(checkbox) {
-            if (checkbox.checked && !pendenciaAdmin) {
-                // Tentando ligar: mostrar modal de senha
-                checkbox.checked = false; // Desmarcar até validar
+        const toggleStatus = async (docId, mesIdx) => {
+            if (!user) return;
+            const membro = membros.find(m => m.id === docId);
+            const novosPagamentos = [...membro.pagamentos];
+            novosPagamentos[mesIdx] = !novosPagamentos[mesIdx];
+            
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'membros', docId);
+            await updateDoc(docRef, { pagamentos: novosPagamentos });
+        };
+
+        // Funções de Modal e Admin
+        window.tratarCliqueAdmin = (checkbox) => {
+            if (checkbox.checked) {
+                checkbox.checked = false;
                 document.getElementById('adminPasswordOverlay').classList.remove('hidden');
                 document.getElementById('adminPasswordInput').focus();
-                document.body.style.overflow = 'hidden';
-            } else if (!checkbox.checked) {
-                // Desligando: apenas desligar
-                pendenciaAdmin = false;
+            } else {
                 document.getElementById('adminLabel').innerText = "Modo Administrador";
                 document.getElementById('adminLabel').classList.remove('text-blue-600');
                 buscarNome();
             }
-        }
+        };
 
-        function confirmarAdmin() {
-            const input = document.getElementById('adminPasswordInput');
-            const erro = document.getElementById('adminPasswordError');
-
-            if (input.value === SENHA_ADMIN) {
-                pendenciaAdmin = true;
+        window.confirmarAdmin = () => {
+            if (document.getElementById('adminPasswordInput').value === SENHA_ADMIN) {
                 document.getElementById('adminToggle').checked = true;
                 document.getElementById('adminLabel').innerText = "Modo ADMIN Ativo";
                 document.getElementById('adminLabel').classList.add('text-blue-600');
-                cancelarAdmin(); // Fecha o modal
+                cancelarAdmin();
                 buscarNome();
             } else {
-                erro.classList.remove('hidden');
-                input.value = "";
-                input.focus();
+                document.getElementById('adminPasswordError').classList.remove('hidden');
             }
-        }
+        };
 
-        function cancelarAdmin() {
+        window.cancelarAdmin = () => {
             document.getElementById('adminPasswordOverlay').classList.add('hidden');
             document.getElementById('adminPasswordError').classList.add('hidden');
             document.getElementById('adminPasswordInput').value = "";
-            document.body.style.overflow = 'auto';
-        }
+        };
 
-        function toggleStatus(nome, mesIndex) {
-            const membro = membros.find(m => m.nome === nome);
-            if (membro) {
-                membro.pagamentos[mesIndex] = !membro.pagamentos[mesIndex];
-                buscarNome();
-                atualizarStats();
-            }
-        }
-
-        function abrirModalPagamento(nome, mes, mesIndex) {
+        function abrirModalPagamento(nome, mes, mesIdx) {
             document.getElementById('modalNome').innerText = nome;
-            document.getElementById('modalMes').innerText = `Mensalidade de ${mes}`;
-            document.getElementById('modalValor').innerText = `R$ ${VALOR_MENSALIDADE.toFixed(2).replace('.', ',')}`;
-            document.getElementById('pixKeyInput').value = chavesPixMensais[mesIndex] || "gcdesign.informatica@gmail.com";
+            document.getElementById('modalMes').innerText = "Mensalidade de " + mes;
+            document.getElementById('pixKeyInput').value = chavesPixMensais[mesIdx] || "gcdesign.informatica@gmail.com";
             document.getElementById('paymentModalOverlay').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
         }
 
-        function abrirModalPagamentoTotal(nome, valor) {
-            document.getElementById('modalNome').innerText = nome;
-            document.getElementById('modalMes').innerText = "Débito Consolidado";
-            document.getElementById('modalValor').innerText = `R$ ${valor.toFixed(2).replace('.', ',')}`;
-            document.getElementById('pixKeyInput').value = "gcdesign.informatica@gmail.com";
-            document.getElementById('paymentModalOverlay').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function fecharModalPagamento() {
-            document.getElementById('paymentModalOverlay').classList.add('hidden');
-            document.getElementById('copyPixButton').innerText = 'Copiar';
-            document.body.style.overflow = 'auto';
-        }
-
-        function copiarChavePix() {
-            const inputChave = document.getElementById('pixKeyInput');
-            const button = document.getElementById('copyPixButton');
-            inputChave.select();
+        window.fecharModalPagamento = () => document.getElementById('paymentModalOverlay').classList.add('hidden');
+        window.copiarChavePix = () => {
+            const input = document.getElementById('pixKeyInput');
+            input.select();
             document.execCommand('copy');
-            button.innerText = 'Copiado!';
-            setTimeout(() => { button.innerText = 'Copiar'; }, 2000);
-        }
+            document.getElementById('copyPixButton').innerText = 'Copiado!';
+            setTimeout(() => document.getElementById('copyPixButton').innerText = 'Copiar', 2000);
+        };
 
+        initAuth();
     </script>
 </body>
 </html>
