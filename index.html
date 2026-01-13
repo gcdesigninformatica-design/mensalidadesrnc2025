@@ -59,7 +59,7 @@
                 
                 <div class="bg-blue-50 border border-blue-200 text-center p-4 rounded-lg">
                     <p class="text-sm text-blue-800">Valor</p>
-                    <p id="modalValor" class="text-3xl font-bold text-blue-900">R$ 15,00</p>
+                    <p id="modalValor" class="text-3xl font-bold text-blue-900">R$ 9,75</p>
                 </div>
 
                 <div class="text-center">
@@ -75,20 +75,20 @@
 
 
     <script>
-        // --- CHAVES PIX PARA CADA MÊS ---
+        // --- CHAVES PIX PARA CADA MÊS (Atualizadas para R$ 9,75) ---
         const chavesPixMensais = [
             "", // Jan
             "", // Fev
             "", // Mar
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", // Abr
-            "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", // Mai
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", // Jun
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", // Jul
-            "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", // Ago
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", // Set
-            "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", // Out
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", // Nov
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro520400005303986540515.005802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"  // Dez
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", // Abr
+            "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", // Mai
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", // Jun
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", // Jul
+            "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", // Ago
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", // Set
+            "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", // Out
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", // Nov
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"  // Dez
         ];
 
         // --- BASE DE DADOS ---
@@ -205,9 +205,9 @@
 
                     html += `</div>`; // Fim da grid de meses
 
-                    // Adiciona o botão de débito total se houver pendências
+                    // Adiciona o botão de débito total se houver pendências (Calculado com 9.75)
                     if (totalPendente > 0) {
-                        const valorTotalDebito = totalPendente * 15;
+                        const valorTotalDebito = totalPendente * 9.75;
                         html += `
                             <div class="mt-6 border-t pt-4 text-center">
                                 <p class="text-sm text-gray-700 mb-2">Débito total: <span class="font-bold">R$ ${valorTotalDebito.toFixed(2).replace('.', ',')}</span></p>
@@ -228,7 +228,7 @@
         function abrirModalPagamento(nome, mes, mesIndex) {
             document.getElementById('modalNome').innerText = nome;
             document.getElementById('modalMes').innerText = mes;
-            document.getElementById('modalValor').innerText = 'R$ 15,00';
+            document.getElementById('modalValor').innerText = 'R$ 9,75';
             document.getElementById('pixKeyInput').value = chavesPixMensais[mesIndex];
             document.getElementById('paymentModalOverlay').classList.remove('hidden');
         }
@@ -261,7 +261,8 @@
                     button.innerText = 'Copiar';
                 }, 2000);
             } catch (err) {
-                alert('Não foi possível copiar a chave. Tente manualmente.');
+                // Em ambientes onde execCommand pode falhar
+                console.error('Erro ao copiar', err);
             }
 
             window.getSelection().removeAllRanges();
