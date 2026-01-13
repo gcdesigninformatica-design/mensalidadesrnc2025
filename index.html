@@ -3,96 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificador de Pagamentos</title>
+    <title>Painel de Mensalidades</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Estilo para a transição suave do modal */
-        #paymentModalOverlay {
-            transition: opacity 0.3s ease-in-out;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #paymentModalOverlay { transition: opacity 0.3s ease-in-out; }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-50 text-slate-900 min-h-screen p-4 pb-20">
 
-    <div class="bg-white w-full max-w-3xl p-6 sm:p-8 rounded-2xl shadow-lg">
-        
-        <!-- Cabeçalho -->
-        <div class="text-center mb-8">
-            <!-- Imagem adicionada -->
-            <img src="https://i.imgur.com/VcDc5H6.png" alt="Ícone de Verificação" class="mx-auto h-20 w-20 mb-4 rounded-xl shadow">
-            
-            <h1 class="text-3xl font-bold text-gray-800">Verificador de Pagamentos</h1>
-            <p class="text-gray-500 mt-2">Insira o nome para consultar a situação das mensalidades.</p>
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Cabeçalho Principal -->
+        <header class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+            <img src="https://i.imgur.com/VcDc5H6.png" alt="Ícone" class="mx-auto h-16 w-16 mb-4 rounded-2xl shadow-sm">
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-800">Verificador de Pagamentos</h1>
+            <p class="text-slate-500 mt-2">Gestão transparente de mensalidades e pendências.</p>
+        </header>
+
+        <!-- Dashboard de Resumo -->
+        <div id="statsDashboard" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Membros</p>
+                <p id="statTotalMembros" class="text-2xl font-bold text-slate-800">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-xs font-semibold text-green-600 uppercase tracking-wider">Total Pago (Mês Atual)</p>
+                <p id="statTotalPago" class="text-2xl font-bold text-green-600">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-xs font-semibold text-red-600 uppercase tracking-wider">Pendentes</p>
+                <p id="statTotalPendente" class="text-2xl font-bold text-red-600">0</p>
+            </div>
         </div>
 
-        <!-- Barra de Busca -->
-        <div class="flex flex-col sm:flex-row gap-3 mb-6">
-            <input type="text" id="searchInput" placeholder="Digite o nome completo..." class="flex-grow w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-            <button onclick="buscarNome()" class="bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-700 transition shadow">Buscar</button>
-        </div>
+        <!-- Barra de Busca Inteligente -->
+        <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Buscar por nome..." 
+                    class="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-lg"
+                    oninput="buscarNome()">
+                <svg class="w-6 h-6 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </section>
 
         <!-- Área de Resultados -->
-        <div id="result" class="bg-gray-50 p-6 rounded-lg min-h-[200px] flex items-center justify-center">
-            <p class="text-gray-500">Aguardando busca...</p>
-        </div>
+        <main id="result" class="space-y-4">
+            <div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                <p class="text-slate-400">Comece a digitar para ver os resultados...</p>
+            </div>
+        </main>
     </div>
 
-    <!-- Modal de Pagamento PIX (inicialmente oculto) -->
-    <div id="paymentModalOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50" onclick="fecharModalPagamento()">
-        <div id="paymentModal" class="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full relative" onclick="event.stopPropagation()">
-            <!-- Botão de fechar -->
-            <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+    <!-- Modal de Pagamento -->
+    <div id="paymentModalOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50" onclick="fecharModalPagamento()">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full relative scale-in" onclick="event.stopPropagation()">
+            <button onclick="fecharModalPagamento()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
             
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Pagamento via PIX</h2>
-            <p class="text-center text-gray-500 mb-6">Efetue o pagamento para regularizar a situação.</p>
+            <h2 class="text-2xl font-bold text-slate-800 mb-1">Pagamento PIX</h2>
+            <p class="text-slate-500 text-sm mb-6">Escaneie ou copie o código abaixo.</p>
 
-            <!-- Detalhes do Pagamento -->
-            <div class="space-y-4">
-                <p class="text-sm"><strong>Nome:</strong> <span id="modalNome" class="font-normal text-gray-700"></span></p>
-                <p class="text-sm"><strong>Referente a:</strong> <span id="modalMes" class="font-normal text-gray-700"></span></p>
+            <div class="space-y-5">
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Destinatário & Mês</p>
+                    <p id="modalNome" class="text-slate-800 font-semibold"></p>
+                    <p id="modalMes" class="text-blue-600 text-sm font-medium"></p>
+                </div>
                 
-                <div class="bg-blue-50 border border-blue-200 text-center p-4 rounded-lg">
-                    <p class="text-sm text-blue-800">Valor</p>
-                    <p id="modalValor" class="text-3xl font-bold text-blue-900">R$ 9,75</p>
+                <div class="bg-blue-600 p-6 rounded-2xl text-center text-white shadow-lg shadow-blue-200">
+                    <p class="text-blue-100 text-sm opacity-80">Valor a pagar</p>
+                    <p id="modalValor" class="text-4xl font-black">R$ 9,75</p>
                 </div>
 
-                <div class="text-center">
-                    <p class="text-sm font-semibold text-gray-700 mb-2">Chave PIX</p>
-                    <div class="flex items-center border rounded-lg bg-gray-50">
-                        <input id="pixKeyInput" type="text" value="" readonly class="w-full bg-transparent p-3 text-gray-800 focus:outline-none">
-                        <button id="copyPixButton" onclick="copiarChavePix()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-3 rounded-r-lg transition">Copiar</button>
+                <div>
+                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">Copia e Cola</label>
+                    <div class="flex mt-1 items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+                        <input id="pixKeyInput" type="text" readonly class="bg-transparent p-4 w-full text-xs font-mono text-slate-600 focus:outline-none">
+                        <button id="copyPixButton" onclick="copiarChavePix()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 h-full transition py-4">Copiar</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Barra de Ferramentas Inferior -->
+    <footer class="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-md border-t border-slate-200 p-3 flex justify-center gap-4">
+        <label class="inline-flex items-center cursor-pointer">
+            <span class="mr-3 text-sm font-medium text-slate-500">Modo Administrador</span>
+            <input type="checkbox" id="adminToggle" class="sr-only peer">
+            <div class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+    </footer>
 
     <script>
-        // --- CHAVES PIX PARA CADA MÊS (Atualizadas para R$ 9,75) ---
+        // Configurações Globais
+        const VALOR_MENSALIDADE = 9.75;
+        const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
         const chavesPixMensais = [
-            "", // Jan
-            "", // Fev
-            "", // Mar
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", // Abr
-            "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", // Mai
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", // Jun
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", // Jul
-            "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", // Ago
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", // Set
-            "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", // Out
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", // Nov
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"  // Dez
+            "", "", "",
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F",
+            "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9",
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056",
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488",
+            "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23",
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48",
+            "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A",
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E",
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"
         ];
 
-        // --- BASE DE DADOS ---
-        const membros = [
+        // Base de Dados Atualizada
+        let membros = [
             {"nome": "ALFREDO ALVES", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
             {"nome": "ANDERSON", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
             {"nome": "ANDRÉ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
@@ -151,124 +182,127 @@
             {"nome": "YÔRHAN", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
             {"nome": "THAIZY", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]}
         ];
-        // --- FIM DA BASE DE DADOS ---
 
-        const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        window.onload = () => {
+            atualizarStats();
+            buscarNome();
+        };
 
-        document.getElementById("searchInput").addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                buscarNome();
-            }
-        });
+        function atualizarStats() {
+            const totalMembros = membros.length;
+            const mesAtualIdx = new Date().getMonth();
+            const totalPago = membros.filter(m => m.pagamentos[mesAtualIdx]).length;
+            const totalPendente = totalMembros - totalPago;
+
+            document.getElementById('statTotalMembros').innerText = totalMembros;
+            document.getElementById('statTotalPago').innerText = totalPago;
+            document.getElementById('statTotalPendente').innerText = totalPendente;
+        }
 
         function buscarNome() {
-            const input = document.getElementById('searchInput');
-            const termoBusca = input.value.trim().toUpperCase();
+            const termo = document.getElementById('searchInput').value.trim().toUpperCase();
             const resultDiv = document.getElementById('result');
+            const isAdmin = document.getElementById('adminToggle').checked;
+            
+            const filtrados = membros.filter(m => m.nome.includes(termo));
 
-            if (!termoBusca) {
-                resultDiv.innerHTML = `<p class="text-yellow-700">Por favor, digite um nome para buscar.</p>`;
+            if (termo === "") {
+                resultDiv.innerHTML = `<div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200"><p class="text-slate-400 italic">Digite o nome de um membro para verificar o status...</p></div>`;
                 return;
             }
 
-            const resultados = membros.filter(m => m.nome.toUpperCase() === termoBusca);
-
-            if (resultados.length > 0) {
+            if (filtrados.length > 0) {
                 let html = '';
-                resultados.forEach(membro => {
-                    const pagamentos = membro.pagamentos;
-                    const totalPago = pagamentos.filter(p => p).length;
+                filtrados.forEach(membro => {
+                    const totalPago = membro.pagamentos.filter(p => p).length;
                     const totalPendente = 12 - totalPago;
+                    const valorDebito = totalPendente * VALOR_MENSALIDADE;
 
                     html += `
-                        <div class="mb-6 last:mb-0">
-                            <h3 class="text-xl font-bold text-gray-800">${membro.nome}</h3>
-                            <p class="text-sm text-gray-600 mb-4">Total de mensalidades pagas: <span class="font-bold text-green-600">${totalPago} de 12</span></p>
-                            <div class="grid grid-cols-6 sm:grid-cols-12 gap-2 text-center">`;
+                        <article class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 fade-in">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-800">${membro.nome}</h3>
+                                    <p class="text-sm text-slate-500 font-medium">Frequência anual: <span class="${totalPago > 9 ? 'text-green-600' : 'text-orange-600'}">${totalPago} de 12 meses</span></p>
+                                </div>
+                                ${valorDebito > 0 ? `<span class="bg-red-50 text-red-700 px-4 py-1 rounded-full text-xs font-bold border border-red-100 uppercase tracking-wider">Pendente: R$ ${valorDebito.toFixed(2).replace('.',',')}</span>` : `<span class="bg-green-50 text-green-700 px-4 py-1 rounded-full text-xs font-bold border border-green-100 uppercase tracking-wider">Em dia</span>`}
+                            </div>
 
-                    pagamentos.forEach((pago, index) => {
-                        const mes = meses[index];
-                        if (pago) {
-                            html += `
-                                <div class="p-2 bg-green-100 text-green-800 rounded-lg">
-                                    <span class="font-bold text-sm">${mes}</span>
-                                    <span class="block text-xs">Pago</span>
-                                </div>`;
-                        } else {
-                            html += `
-                                <div class="p-2 bg-red-100 text-red-800 rounded-lg cursor-pointer hover:bg-red-200 hover:shadow-md transition" onclick="abrirModalPagamento('${membro.nome}', '${mes}', ${index})">
-                                    <span class="font-bold text-sm">${mes}</span>
-                                    <span class="block text-xs">Pendente</span>
-                                </div>`;
-                        }
-                    });
-
-                    html += `</div>`; // Fim da grid de meses
-
-                    // Adiciona o botão de débito total se houver pendências (Calculado com 9.75)
-                    if (totalPendente > 0) {
-                        const valorTotalDebito = totalPendente * 9.75;
-                        html += `
-                            <div class="mt-6 border-t pt-4 text-center">
-                                <p class="text-sm text-gray-700 mb-2">Débito total: <span class="font-bold">R$ ${valorTotalDebito.toFixed(2).replace('.', ',')}</span></p>
-                                <button onclick="abrirModalPagamentoTotal('${membro.nome}', ${valorTotalDebito})" class="bg-red-600 text-white font-bold px-5 py-2 rounded-lg hover:bg-red-700 transition shadow-md">
-                                    Pagar Débito Total
-                                </button>
-                            </div>`;
-                    }
-
-                    html += `</div>`; // Fim do card do membro
+                            <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2">
+                                ${membro.pagamentos.map((pago, i) => `
+                                    <div class="group relative">
+                                        <button 
+                                            onclick="${isAdmin ? `toggleStatus('${membro.nome}', ${i})` : (!pago ? `abrirModalPagamento('${membro.nome}', '${meses[i]}', ${i})` : '')}"
+                                            class="w-full py-3 rounded-xl transition-all duration-200 flex flex-col items-center justify-center border-2 
+                                            ${pago ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:text-blue-600'}
+                                            ${isAdmin ? 'cursor-pointer hover:scale-105 active:scale-95' : (pago ? 'cursor-default' : 'cursor-pointer')}">
+                                            <span class="text-[10px] font-bold uppercase">${meses[i]}</span>
+                                            ${pago ? '<svg class="w-4 h-4 mt-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : '<span class="text-[10px] mt-1 font-medium">---</span>'}
+                                        </button>
+                                        <div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+                                            ${pago ? 'Pago' : (isAdmin ? 'Clique para marcar como pago' : 'Pendente - Clique p/ pagar')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            ${totalPendente > 0 ? `
+                                <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                                    <button onclick="abrirModalPagamentoTotal('${membro.nome}', ${valorDebito})" class="text-sm font-bold text-red-600 hover:text-red-700 underline decoration-2 underline-offset-4">Pagar débito total (R$ ${valorDebito.toFixed(2).replace('.', ',')})</button>
+                                </div>
+                            ` : ''}
+                        </article>
+                    `;
                 });
                 resultDiv.innerHTML = html;
             } else {
-                resultDiv.innerHTML = `<p class="text-red-600 font-semibold">Nenhum membro encontrado com o nome "${input.value}".</p>`;
+                resultDiv.innerHTML = `<div class="text-center py-20 bg-white rounded-3xl border border-slate-200"><p class="text-slate-400">Nenhum membro encontrado com esse nome.</p></div>`;
+            }
+        }
+
+        function toggleStatus(nome, mesIndex) {
+            const membro = membros.find(m => m.nome === nome);
+            if (membro) {
+                membro.pagamentos[mesIndex] = !membro.pagamentos[mesIndex];
+                buscarNome();
+                atualizarStats();
             }
         }
 
         function abrirModalPagamento(nome, mes, mesIndex) {
             document.getElementById('modalNome').innerText = nome;
-            document.getElementById('modalMes').innerText = mes;
-            document.getElementById('modalValor').innerText = 'R$ 9,75';
-            document.getElementById('pixKeyInput').value = chavesPixMensais[mesIndex];
+            document.getElementById('modalMes').innerText = `Mensalidade de ${mes}`;
+            document.getElementById('modalValor').innerText = `R$ ${VALOR_MENSALIDADE.toFixed(2).replace('.', ',')}`;
+            document.getElementById('pixKeyInput').value = chavesPixMensais[mesIndex] || "gcdesign.informatica@gmail.com";
             document.getElementById('paymentModalOverlay').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
 
         function abrirModalPagamentoTotal(nome, valor) {
             document.getElementById('modalNome').innerText = nome;
-            document.getElementById('modalMes').innerText = "Débito Total";
+            document.getElementById('modalMes').innerText = "Débito Consolidado";
             document.getElementById('modalValor').innerText = `R$ ${valor.toFixed(2).replace('.', ',')}`;
             document.getElementById('pixKeyInput').value = "gcdesign.informatica@gmail.com";
             document.getElementById('paymentModalOverlay').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
 
         function fecharModalPagamento() {
             document.getElementById('paymentModalOverlay').classList.add('hidden');
-            // Reseta o texto do botão de copiar ao fechar
             document.getElementById('copyPixButton').innerText = 'Copiar';
+            document.body.style.overflow = 'auto';
         }
 
         function copiarChavePix() {
             const inputChave = document.getElementById('pixKeyInput');
             const button = document.getElementById('copyPixButton');
-            
             inputChave.select();
-            inputChave.setSelectionRange(0, 99999);
-
-            try {
-                document.execCommand('copy');
-                button.innerText = 'Copiado!';
-                setTimeout(() => {
-                    button.innerText = 'Copiar';
-                }, 2000);
-            } catch (err) {
-                // Em ambientes onde execCommand pode falhar
-                console.error('Erro ao copiar', err);
-            }
-
-            window.getSelection().removeAllRanges();
+            document.execCommand('copy');
+            button.innerText = 'Copiado!';
+            setTimeout(() => { button.innerText = 'Copiar'; }, 2000);
         }
 
+        document.getElementById('adminToggle').addEventListener('change', buscarNome);
     </script>
-
 </body>
 </html>
