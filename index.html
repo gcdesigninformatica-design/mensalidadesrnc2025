@@ -12,7 +12,7 @@
         body { font-family: 'Inter', sans-serif; }
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #paymentModalOverlay { transition: opacity 0.3s ease-in-out; }
+        #paymentModalOverlay, #adminPasswordOverlay { transition: opacity 0.3s ease-in-out; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen p-4 pb-20">
@@ -95,18 +95,39 @@
         </div>
     </div>
 
+    <!-- Modal de Senha Admin -->
+    <div id="adminPasswordOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[60]" onclick="cancelarAdmin()">
+        <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-xs w-full relative" onclick="event.stopPropagation()">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 text-center">Acesso Restrito</h2>
+            <p class="text-sm text-slate-500 mb-4 text-center">Introduza a senha para ativar o Modo Administrador.</p>
+            
+            <input type="password" id="adminPasswordInput" placeholder="Senha" 
+                class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 mb-4 text-center outline-none">
+            
+            <div id="adminPasswordError" class="text-red-500 text-xs text-center mb-4 hidden">Senha incorreta!</div>
+
+            <div class="flex gap-2">
+                <button onclick="cancelarAdmin()" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">Cancelar</button>
+                <button onclick="confirmarAdmin()" class="flex-1 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition">Entrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Barra de Ferramentas Inferior -->
     <footer class="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-md border-t border-slate-200 p-3 flex justify-center gap-4">
-        <label class="inline-flex items-center cursor-pointer">
-            <span class="mr-3 text-sm font-medium text-slate-500">Modo Administrador</span>
-            <input type="checkbox" id="adminToggle" class="sr-only peer">
-            <div class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-        </label>
+        <div class="flex items-center gap-3">
+            <span id="adminLabel" class="text-sm font-medium text-slate-500">Modo Administrador</span>
+            <div class="relative inline-block w-11 h-6 select-none">
+                <input type="checkbox" id="adminToggle" class="sr-only peer" onchange="tratarCliqueAdmin(this)">
+                <div class="w-full h-full bg-slate-200 rounded-full peer peer-checked:bg-blue-600 transition-colors after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+            </div>
+        </div>
     </footer>
 
     <script>
         // Configurações Globais
         const VALOR_MENSALIDADE = 9.75;
+        const SENHA_ADMIN = "1234"; // Altera aqui a tua senha
         const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
         const chavesPixMensais = [
@@ -122,7 +143,7 @@
             "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"
         ];
 
-        // Base de Dados Atualizada
+        // Base de Dados
         let membros = [
             {"nome": "ALFREDO ALVES", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
             {"nome": "ANDERSON", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
@@ -186,6 +207,11 @@
         window.onload = () => {
             atualizarStats();
             buscarNome();
+
+            // Adicionar evento para a tecla Enter no modal de senha
+            document.getElementById('adminPasswordInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') confirmarAdmin();
+            });
         };
 
         function atualizarStats() {
@@ -260,6 +286,50 @@
             }
         }
 
+        // Funções do Modo Admin com Senha
+        let pendenciaAdmin = false;
+
+        function tratarCliqueAdmin(checkbox) {
+            if (checkbox.checked && !pendenciaAdmin) {
+                // Tentando ligar: mostrar modal de senha
+                checkbox.checked = false; // Desmarcar até validar
+                document.getElementById('adminPasswordOverlay').classList.remove('hidden');
+                document.getElementById('adminPasswordInput').focus();
+                document.body.style.overflow = 'hidden';
+            } else if (!checkbox.checked) {
+                // Desligando: apenas desligar
+                pendenciaAdmin = false;
+                document.getElementById('adminLabel').innerText = "Modo Administrador";
+                document.getElementById('adminLabel').classList.remove('text-blue-600');
+                buscarNome();
+            }
+        }
+
+        function confirmarAdmin() {
+            const input = document.getElementById('adminPasswordInput');
+            const erro = document.getElementById('adminPasswordError');
+
+            if (input.value === SENHA_ADMIN) {
+                pendenciaAdmin = true;
+                document.getElementById('adminToggle').checked = true;
+                document.getElementById('adminLabel').innerText = "Modo ADMIN Ativo";
+                document.getElementById('adminLabel').classList.add('text-blue-600');
+                cancelarAdmin(); // Fecha o modal
+                buscarNome();
+            } else {
+                erro.classList.remove('hidden');
+                input.value = "";
+                input.focus();
+            }
+        }
+
+        function cancelarAdmin() {
+            document.getElementById('adminPasswordOverlay').classList.add('hidden');
+            document.getElementById('adminPasswordError').classList.add('hidden');
+            document.getElementById('adminPasswordInput').value = "";
+            document.body.style.overflow = 'auto';
+        }
+
         function toggleStatus(nome, mesIndex) {
             const membro = membros.find(m => m.nome === nome);
             if (membro) {
@@ -302,7 +372,6 @@
             setTimeout(() => { button.innerText = 'Copiar'; }, 2000);
         }
 
-        document.getElementById('adminToggle').addEventListener('change', buscarNome);
     </script>
 </body>
 </html>
