@@ -13,16 +13,9 @@
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         #paymentModalOverlay, #adminPasswordOverlay { transition: opacity 0.3s ease-in-out; }
-        .loading-spinner { border-top-color: #2563eb; animation: spinner 0.6s linear infinite; }
-        @keyframes spinner { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen p-4 pb-20">
-
-    <div id="loadingOverlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center">
-        <div class="w-12 h-12 border-4 border-slate-200 rounded-full loading-spinner mb-4"></div>
-        <p class="text-slate-500 font-medium">Sincronizando dados...</p>
-    </div>
 
     <div class="max-w-4xl mx-auto space-y-6">
         <!-- Cabeçalho Principal -->
@@ -48,7 +41,7 @@
         <!-- Área de Resultados -->
         <main id="result" class="space-y-4">
             <div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-                <p class="text-slate-400">A carregar banco de dados...</p>
+                <p class="text-slate-400 italic">Digite o nome de um membro para verificar o status...</p>
             </div>
         </main>
     </div>
@@ -100,123 +93,80 @@
         </div>
     </footer>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Configuração Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        // Variáveis de Estado
-        let membros = [];
-        let user = null;
+    <script>
+        // Configurações Globais
         const VALOR_MENSALIDADE = 9.75;
         const SENHA_ADMIN = "1234";
         const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         const chavesPixMensais = ["", "", "", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"];
 
-        // Autenticação
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
+        // Base de Dados Estática (Local)
+        let membros = [
+            {"nome": "ALFREDO ALVES", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "ANDERSON", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+            {"nome": "ANDRÉ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+            {"nome": "EDUARDO RIBEIRO", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "MATHEUS LAMARTINS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "CARLOS HENRIQUE", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "CAROL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "CLÉSIO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "DANUSY", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "DARNLEY", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "LUIS DAVID", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "LUIS EDUARDO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "ELIABIO", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "EMANUEL FAUSTINO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "STEFANIA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "FERNANDO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "FLÁVIO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "GABRIEL", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+            {"nome": "MARIA GABRIELA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+            {"nome": "HELDER FILHO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "HIAGO FAUSTINO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "HILDINAR", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "ILANA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "JARBAS", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "JOÃO MARCELO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "JOÃO MARCOS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "JOÃO PEDRO CRUZ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
+            {"nome": "JOÃO PEDRO SOARES", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "JOÃO VICTOR ANDRADE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "JOÃO VITOR OLIVEIRA", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "JOÃO VITOR ALVES", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "JOSIANE", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "JOYCE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "LETICIA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "MACYEL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "MARCIEL FERSAN", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "MARIANE AQUINO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "MARIA PAULA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "MARINA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "MIKELLY", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "NAELLY MORAIS", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "PRISCILA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "RAFAEL", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "RAUL", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "REGINA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "ROSSELLY", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "SARAH DANTAS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "SILVIO", "pagamentos": [true, true, true, true, true, true, true, true, true, false, false, false]},
+            {"nome": "TAIANE", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
+            {"nome": "THAIS", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
+            {"nome": "VALÉRIA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "WESLEY SEREJO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
+            {"nome": "FRANCISCO WEVERTON", "pagamentos": [true, true, true, true, true, false, false, true, false, false, false, false]},
+            {"nome": "WILLDECLAY", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
+            {"nome": "YLANNA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
+            {"nome": "YÔRHAN", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
+            {"nome": "THAIZY", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]}
+        ];
 
-        onAuthStateChanged(auth, (u) => {
-            user = u;
-            if (u) initSync();
-        });
-
-        // Sincronização em Tempo Real
-        const initSync = () => {
-            const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'membros');
-            
-            onSnapshot(collectionRef, async (snapshot) => {
-                if (snapshot.empty) {
-                    await seedDatabase();
-                    return;
-                }
-                membros = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                buscarNome();
-                document.getElementById('loadingOverlay').classList.add('hidden');
-            }, (error) => {
-                console.error("Erro Firestore:", error);
+        window.onload = () => {
+            buscarNome();
+            // Adicionar suporte para tecla Enter no modal de senha
+            document.getElementById('adminPasswordInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') confirmarAdmin();
             });
-        };
-
-        // Popular banco inicial se estiver vazio
-        const seedDatabase = async () => {
-            const initialData = [
-                {"nome": "ALFREDO ALVES", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
-                {"nome": "ANDERSON", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-                {"nome": "ANDRÉ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-                {"nome": "EDUARDO RIBEIRO", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "MATHEUS LAMARTINS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "CARLOS HENRIQUE", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "CAROL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-                {"nome": "CLÉSIO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-                {"nome": "DANUSY", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "DARNLEY", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-                {"nome": "LUIS DAVID", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-                {"nome": "LUIS EDUARDO", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-                {"nome": "ELIABIO", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "EMANUEL FAUSTINO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-                {"nome": "STEFANIA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "FERNANDO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "FLÁVIO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-                {"nome": "GABRIEL", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-                {"nome": "MARIA GABRIELA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-                {"nome": "HELDER FILHO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "HIAGO FAUSTINO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "HILDINAR", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "ILANA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "JARBAS", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "JOÃO MARCELO", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-                {"nome": "JOÃO MARCOS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "JOÃO PEDRO CRUZ", "pagamentos": [true, true, true, true, true, true, true, true, true, true, false, false]},
-                {"nome": "JOÃO PEDRO SOARES", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "JOÃO VICTOR ANDRADE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "JOÃO VITOR OLIVEIRA", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-                {"nome": "JOÃO VITOR ALVES", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-                {"nome": "JOSIANE", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-                {"nome": "JOYCE", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "LETICIA", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "MACYEL", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-                {"nome": "MARCIEL FERSAN", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "MARIANE AQUINO", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-                {"nome": "MARIA PAULA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-                {"nome": "MARINA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "MIKELLY", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-                {"nome": "NAELLY MORAIS", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "PRISCILA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
-                {"nome": "RAFAEL", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "RAUL", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-                {"nome": "REGINA", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
-                {"nome": "ROSSELLY", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-                {"nome": "SARAH DANTAS", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "SILVIO", "pagamentos": [true, true, true, true, true, true, true, true, true, false, false, false]},
-                {"nome": "TAIANE", "pagamentos": [true, true, true, true, true, true, false, false, false, false, false, false]},
-                {"nome": "THAIS", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]},
-                {"nome": "VALÉRIA", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "WESLEY SEREJO", "pagamentos": [true, true, true, false, false, false, false, false, false, false, false, false]},
-                {"nome": "FRANCISCO WEVERTON", "pagamentos": [true, true, true, true, true, false, false, true, false, false, false, false]},
-                {"nome": "WILLDECLAY", "pagamentos": [true, true, true, true, true, true, true, true, true, true, true, true]},
-                {"nome": "YLANNA", "pagamentos": [true, true, true, true, true, false, false, false, false, false, false, false]},
-                {"nome": "YÔRHAN", "pagamentos": [true, true, true, true, false, false, false, false, false, false, false, false]},
-                {"nome": "THAIZY", "pagamentos": [true, true, true, true, true, true, true, false, false, false, false, false]}
-            ];
-
-            for (const m of initialData) {
-                const docId = m.nome.toLowerCase().replace(/\s+/g, '_');
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'membros', docId), m);
-            }
         };
 
         // Lógica de UI
@@ -247,7 +197,7 @@
                             <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2">
                                 ${membro.pagamentos.map((pago, i) => `
                                     <button 
-                                        onclick="window.acaoClique('${membro.id}', ${i}, ${pago})"
+                                        onclick="window.acaoClique('${membro.nome}', ${i}, ${pago})"
                                         class="w-full py-3 rounded-xl transition-all border-2 flex flex-col items-center justify-center
                                         ${pago ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:text-blue-600'}">
                                         <span class="text-[10px] font-bold uppercase">${meses[i]}</span>
@@ -262,24 +212,21 @@
             }
         };
 
-        window.acaoClique = (docId, mesIdx, estaPago) => {
+        window.acaoClique = (nome, mesIdx, estaPago) => {
             const isAdmin = document.getElementById('adminToggle').checked;
-            const membro = membros.find(m => m.id === docId);
             if (isAdmin) {
-                toggleStatus(docId, mesIdx);
+                toggleStatus(nome, mesIdx);
             } else if (!estaPago) {
-                abrirModalPagamento(membro.nome, meses[mesIdx], mesIdx);
+                abrirModalPagamento(nome, meses[mesIdx], mesIdx);
             }
         };
 
-        const toggleStatus = async (docId, mesIdx) => {
-            if (!user) return;
-            const membro = membros.find(m => m.id === docId);
-            const novosPagamentos = [...membro.pagamentos];
-            novosPagamentos[mesIdx] = !novosPagamentos[mesIdx];
-            
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'membros', docId);
-            await updateDoc(docRef, { pagamentos: novosPagamentos });
+        const toggleStatus = (nome, mesIdx) => {
+            const membro = membros.find(m => m.nome === nome);
+            if (membro) {
+                membro.pagamentos[mesIdx] = !membro.pagamentos[mesIdx];
+                buscarNome();
+            }
         };
 
         // Funções de Modal e Admin
@@ -328,8 +275,6 @@
             document.getElementById('copyPixButton').innerText = 'Copiado!';
             setTimeout(() => document.getElementById('copyPixButton').innerText = 'Copiar', 2000);
         };
-
-        initAuth();
     </script>
 </body>
 </html>
