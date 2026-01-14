@@ -59,12 +59,13 @@
                     <p id="modalMes" class="text-blue-600 text-sm font-medium"></p>
                 </div>
                 <div class="bg-blue-600 p-6 rounded-2xl text-center text-white shadow-lg">
-                    <p id="modalValor" class="text-4xl font-black">R$ 9,75</p>
+                    <p id="modalValor" class="text-4xl font-black">R$ 0,00</p>
                 </div>
                 <div class="flex mt-1 items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
                     <input id="pixKeyInput" type="text" readonly class="bg-transparent p-4 w-full text-xs font-mono text-slate-600 outline-none">
                     <button id="copyPixButton" onclick="copiarChavePix()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 h-full transition py-4">Copiar</button>
                 </div>
+                <p class="text-[10px] text-slate-400 text-center">Após pagar, envie o comprovante para o administrador.</p>
             </div>
         </div>
     </div>
@@ -97,8 +98,21 @@
         // Configurações Globais
         const VALOR_MENSALIDADE = 9.75;
         const SENHA_ADMIN = "1234";
+        const CHAVE_PIX_GERAL = "gcdesign.informatica@gmail.com";
         const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-        const chavesPixMensais = ["", "", "", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"];
+        
+        // QR Codes PIX Estáticos (Copia e Cola) para meses individuais
+        const chavesPixMensais = ["", "", "", 
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", 
+            "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", 
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", 
+            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", 
+            "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", 
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", 
+            "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", 
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", 
+            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"
+        ];
 
         // Base de Dados Estática (Local)
         let membros = [
@@ -163,7 +177,6 @@
 
         window.onload = () => {
             buscarNome();
-            // Adicionar suporte para tecla Enter no modal de senha
             document.getElementById('adminPasswordInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') confirmarAdmin();
             });
@@ -194,7 +207,8 @@
                                 <div><h3 class="text-xl font-bold text-slate-800">${membro.nome}</h3></div>
                                 ${valorDebito > 0 ? `<span class="bg-red-50 text-red-700 px-4 py-1 rounded-full text-xs font-bold border border-red-100 uppercase">Pendente: R$ ${valorDebito.toFixed(2).replace('.',',')}</span>` : `<span class="bg-green-50 text-green-700 px-4 py-1 rounded-full text-xs font-bold border border-green-100 uppercase">Em dia</span>`}
                             </div>
-                            <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2">
+                            
+                            <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2 mb-4">
                                 ${membro.pagamentos.map((pago, i) => `
                                     <button 
                                         onclick="window.acaoClique('${membro.nome}', ${i}, ${pago})"
@@ -204,6 +218,14 @@
                                     </button>
                                 `).join('')}
                             </div>
+
+                            ${valorDebito > 0 ? `
+                                <button onclick="window.abrirModalPagamentoTotal('${membro.nome}', ${valorDebito})"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 group">
+                                    <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                    Pagar Débito Total (R$ ${valorDebito.toFixed(2).replace('.',',')})
+                                </button>
+                            ` : ''}
                         </article>`;
                 });
                 resultDiv.innerHTML = html;
@@ -217,7 +239,7 @@
             if (isAdmin) {
                 toggleStatus(nome, mesIdx);
             } else if (!estaPago) {
-                abrirModalPagamento(nome, meses[mesIdx], mesIdx);
+                abrirModalPagamentoMensal(nome, meses[mesIdx], mesIdx);
             }
         };
 
@@ -260,20 +282,46 @@
             document.getElementById('adminPasswordInput').value = "";
         };
 
-        function abrirModalPagamento(nome, mes, mesIdx) {
+        // Modal para Mês Específico
+        function abrirModalPagamentoMensal(nome, mes, mesIdx) {
             document.getElementById('modalNome').innerText = nome;
             document.getElementById('modalMes').innerText = "Mensalidade de " + mes;
-            document.getElementById('pixKeyInput').value = chavesPixMensais[mesIdx] || "gcdesign.informatica@gmail.com";
+            document.getElementById('modalValor').innerText = "R$ " + VALOR_MENSALIDADE.toFixed(2).replace('.', ',');
+            
+            // Tenta usar a chave específica do mês, se não existir usa a geral
+            const pixKey = chavesPixMensais[mesIdx] || CHAVE_PIX_GERAL;
+            document.getElementById('pixKeyInput').value = pixKey;
+            
             document.getElementById('paymentModalOverlay').classList.remove('hidden');
         }
 
-        window.fecharModalPagamento = () => document.getElementById('paymentModalOverlay').classList.add('hidden');
+        // Modal para Débito Total
+        window.abrirModalPagamentoTotal = (nome, valor) => {
+            document.getElementById('modalNome').innerText = nome;
+            document.getElementById('modalMes').innerText = "Pagamento de Débito Total";
+            document.getElementById('modalValor').innerText = "R$ " + valor.toFixed(2).replace('.', ',');
+            
+            // Para pagamento total, usamos a chave de e-mail direta
+            document.getElementById('pixKeyInput').value = CHAVE_PIX_GERAL;
+            
+            document.getElementById('paymentModalOverlay').classList.remove('hidden');
+        };
+
+        window.fecharModalPagamento = () => {
+            document.getElementById('paymentModalOverlay').classList.add('hidden');
+            document.getElementById('copyPixButton').innerText = 'Copiar';
+        };
+
         window.copiarChavePix = () => {
             const input = document.getElementById('pixKeyInput');
             input.select();
             document.execCommand('copy');
             document.getElementById('copyPixButton').innerText = 'Copiado!';
-            setTimeout(() => document.getElementById('copyPixButton').innerText = 'Copiar', 2000);
+            setTimeout(() => {
+                if(!document.getElementById('paymentModalOverlay').classList.contains('hidden')) {
+                    document.getElementById('copyPixButton').innerText = 'Copiar';
+                }
+            }, 2000);
         };
     </script>
 </body>
