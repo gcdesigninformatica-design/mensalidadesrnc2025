@@ -98,21 +98,12 @@
         // Configurações Globais
         const VALOR_MENSALIDADE = 9.75;
         const SENHA_ADMIN = "1234";
-        const CHAVE_PIX_GERAL = "gcdesign.informatica@gmail.com";
+        // Chave PIX atualizada para o número solicitado
+        const CHAVE_PIX_GERAL = "86995245100";
         const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         
-        // QR Codes PIX Estáticos (Copia e Cola) para meses individuais
-        const chavesPixMensais = ["", "", "", 
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade abril52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304E94F", 
-            "00020101021126720014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0216Mensalidade maio52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63046EE9", 
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade junho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63047056", 
-            "00020101021126730014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0217Mensalidade julho52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D488", 
-            "00020101021126740014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0218Mensalidade agosto52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63043B23", 
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade setembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63044E48", 
-            "00020101021126750014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0219Mensalidade outubro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304470A", 
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade novembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***63042C4E", 
-            "00020101021126760014br.gov.bcb.pix0130gcdesign.informatica@gmail.com0220Mensalidade dezembro52040000530398654049.755802BR5919GABRIEL C H BRANDAO6013JOSE DE FREIT62070503***6304D4B9"
-        ];
+        // Limpamos os códigos estáticos antigos para forçar o uso da nova chave 86995245100
+        const chavesPixMensais = Array(12).fill("");
 
         // Base de Dados Estática (Local)
         let membros = [
@@ -288,7 +279,7 @@
             document.getElementById('modalMes').innerText = "Mensalidade de " + mes;
             document.getElementById('modalValor').innerText = "R$ " + VALOR_MENSALIDADE.toFixed(2).replace('.', ',');
             
-            // Tenta usar a chave específica do mês, se não existir usa a geral
+            // Agora todas as mensalidades usarão a chave geral 86995245100
             const pixKey = chavesPixMensais[mesIdx] || CHAVE_PIX_GERAL;
             document.getElementById('pixKeyInput').value = pixKey;
             
@@ -301,7 +292,6 @@
             document.getElementById('modalMes').innerText = "Pagamento de Débito Total";
             document.getElementById('modalValor').innerText = "R$ " + valor.toFixed(2).replace('.', ',');
             
-            // Para pagamento total, usamos a chave de e-mail direta
             document.getElementById('pixKeyInput').value = CHAVE_PIX_GERAL;
             
             document.getElementById('paymentModalOverlay').classList.remove('hidden');
